@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getProductById, updateProduct, deleteProduct } from '@/app/lib/db'
 
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+type RouteContext = { params: Promise<{ id: string }> }
+
+export async function GET(_req: NextRequest, { params }: RouteContext) {
   try {
-    const product = getProductById(Number(params.id))
+    const { id } = await params
+    const product = getProductById(Number(id))
     if (!product) return NextResponse.json({ success: false, error: 'Producto no encontrado' }, { status: 404 })
     return NextResponse.json({ success: true, data: product })
   } catch (err) {
@@ -11,10 +14,11 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
   }
 }
 
-export async function PUT(req: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(req: NextRequest, { params }: RouteContext) {
   try {
+    const { id } = await params
     const body = await req.json()
-    const product = updateProduct(Number(params.id), {
+    const product = updateProduct(Number(id), {
       name: body.name?.trim(),
       grams: body.grams !== undefined ? Number(body.grams) : undefined,
       karat: body.karat !== undefined ? Number(body.karat) as 10 | 14 | 18 | 24 : undefined,
@@ -23,7 +27,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
       extras: body.extras !== undefined ? Number(body.extras) : undefined,
       notes: body.notes?.trim() || null,
     })
-
     if (!product) return NextResponse.json({ success: false, error: 'Producto no encontrado' }, { status: 404 })
     return NextResponse.json({ success: true, data: product })
   } catch (err) {
@@ -31,9 +34,10 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   }
 }
 
-export async function DELETE(_req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, { params }: RouteContext) {
   try {
-    const deleted = deleteProduct(Number(params.id))
+    const { id } = await params
+    const deleted = deleteProduct(Number(id))
     if (!deleted) return NextResponse.json({ success: false, error: 'Producto no encontrado' }, { status: 404 })
     return NextResponse.json({ success: true })
   } catch (err) {
