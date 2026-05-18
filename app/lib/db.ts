@@ -29,7 +29,10 @@ export async function getGoldPrice() {
   await initDb()
   const rows = await sql`SELECT price_per_gram, updated_at FROM gold_price WHERE id = 1`
   const row = rows[0] as Record<string, unknown>
-  return { price_per_gram: Number(row.price_per_gram), updated_at: String(row.updated_at) }
+  return { 
+    price_per_gram: Number(row.price_per_gram), 
+    updated_at: new Date(String(row.updated_at)).toISOString()
+  }
 }
 
 export async function setGoldPrice(price: number) {
