@@ -1,14 +1,21 @@
+import { neon } from '@neondatabase/serverless'
 import { NextRequest, NextResponse } from 'next/server'
-import { getGoldPrice, setGoldPrice } from '@/app/lib/db'
-import { refreshGoldPriceNow, startGoldPriceCron } from '@/app/lib/cron'
 
-// Start cron when this module is first loaded
-startGoldPriceCron()
+const sql = neon(process.env.DATABASE_URL!)
 
 export async function GET() {
   try {
-    const data = getGoldPrice()
-    return NextResponse.json({ success: true, data })
+    await sql`CREATE TABLE IF NOT EXISTS gold_price (id INTEGER PRIMARY KEY, price_per_gram FLOAT NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`
+    await sql`INSERT INTO gold_price (id, price_per_gram) VALUES (1, 160.0) ON CONFLICT (id) DO NOTHING`
+    const rows = await sql`SELECT price_per_gram, updated_at FROM gold_price WHERE id = 1`
+    const row = rows[0]
+    return NextResponse.json({ 
+      success: true, 
+      data: { 
+        price_per_gram: Number(row.price_per_gram), 
+        updated_at: new Date(row.updated_at as string).toISOString() 
+      } 
+    })
   } catch (err) {
     return NextResponse.json({ success: false, error: String(err) }, { status: 500 })
   }
@@ -17,19 +24,19 @@ export async function GET() {
 export async function PUT(req: NextRequest) {
   try {
     const body = await req.json()
-
-    // Manual price override
     if (typeof body.price_per_gram === 'number' && body.price_per_gram > 0) {
-      setGoldPrice(body.price_per_gram)
-      return NextResponse.json({ success: true, data: getGoldPrice() })
+      await sql`UPDATE gold_price SET price_per_gram = ${body.price_per_gram}, updated_at = NOW() WHERE id = 1`
+      const rows = await sql`SELECT price_per_gram, updated_at FROM gold_price WHERE id = 1`
+      const row = rows[0]
+      return NextResponse.json({ success: true, data: { price_per_gram: Number(row.price_per_gram), updated_at: new Date(row.updated_at as string).toISOString() } })
     }
-
-    // Refresh from mock API
     if (body.refresh === true) {
-      const newPrice = await refreshGoldPriceNow()
-      return NextResponse.json({ success: true, data: getGoldPrice(), fetched: newPrice })
+      const newPrice = parseFloat((96.5 + (Math.random() - 0.5) * 4).toFixed(2))
+      await sql`UPDATE gold_price SET price_per_gram = ${newPrice}, updated_at = NOW() WHERE id = 1`
+      const rows = await sql`SELECT price_per_gram, updated_at FROM gold_price WHERE id = 1`
+      const row = rows[0]
+      return NextResponse.json({ success: true, data: { price_per_gram: Number(row.price_per_gram), updated_at: new Date(row.updated_at as string).toISOString() } })
     }
-
     return NextResponse.json({ success: false, error: 'Invalid payload' }, { status: 400 })
   } catch (err) {
     return NextResponse.json({ success: false, error: String(err) }, { status: 500 })
