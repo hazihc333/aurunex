@@ -31,7 +31,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: true, data: { price_per_gram: Number(row.price_per_gram), updated_at: new Date(row.updated_at as string).toISOString() } })
     }
     if (body.refresh === true) {
-     const res = await fetch(`https://metals.dev/api/v1/latest?api_key=${process.env.METALS_API_KEY}&currency=USD&unit=troy_oz`)
+     const res = await fetch(`https://api.metals.dev/v1/latest?api_key=${process.env.METALS_API_KEY}&currency=USD&unit=toz`)
      const data = await res.json()
      const ozPrice = data?.metals?.gold ?? 3200
      const newPrice = parseFloat((ozPrice / 31.1035).toFixed(2))
