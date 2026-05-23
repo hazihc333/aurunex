@@ -16,8 +16,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <div className="logo">
                 <div className="logo-icon">💍</div>
                 <div>
-                  <div className="logo-text">Áureo</div>
-                  <div className="logo-sub">Calculador de Joyas</div>
+                  <div className="logo-text">Aurunex</div>
+                 <div className="logo-sub">Calculador de Joyas</div>
                 </div>
               </div>
             </div>
