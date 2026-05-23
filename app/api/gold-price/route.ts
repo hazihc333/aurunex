@@ -31,7 +31,10 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: true, data: { price_per_gram: Number(row.price_per_gram), updated_at: new Date(row.updated_at as string).toISOString() } })
     }
     if (body.refresh === true) {
-      const newPrice = parseFloat((96.5 + (Math.random() - 0.5) * 4).toFixed(2))
+      const res = await fetch('https://metals.live/api/v1/latest?metals=gold')
+      const data = await res.json()
+      const ozPrice = data[0]?.gold ?? 3200
+      const newPrice = parseFloat((ozPrice / 31.1035).toFixed(2))
       await sql`UPDATE gold_price SET price_per_gram = ${newPrice}, updated_at = NOW() WHERE id = 1`
       const rows = await sql`SELECT price_per_gram, updated_at FROM gold_price WHERE id = 1`
       const row = rows[0]
