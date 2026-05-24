@@ -345,8 +345,29 @@ export default function Dashboard() {
     )
   }
 
+  const handleLogout = async () => {
+    await fetch('/api/auth/logout', { method: 'POST' })
+    window.location.href = '/login'
+  }
+
   return (
     <>
+      {/* ── Header ── */}
+      <header className="header">
+        <div className="header-inner">
+          <div className="logo">
+            <div className="logo-icon">💍</div>
+            <div>
+              <div className="logo-text">Aurunex</div>
+              <div className="logo-sub">Calculador de Joyas</div>
+            </div>
+          </div>
+          <button className="btn btn-ghost btn-sm" onClick={handleLogout}>
+            🚪 Cerrar sesión
+          </button>
+        </div>
+      </header>
+
       {/* ── Gold Price Banner ── */}
       {goldPrice && (
         <div className="gold-banner">
