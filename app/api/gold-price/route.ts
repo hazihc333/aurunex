@@ -31,14 +31,15 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ success: true, data: { price_per_gram: Number(row.price_per_gram), updated_at: new Date(row.updated_at as string).toISOString() } })
     }
     if (body.refresh === true) {
-     const res = await fetch(`https://api.metals.dev/v1/latest?api_key=${process.env.METALS_API_KEY}&currency=USD&unit=toz`)
-     const data = await res.json()
-     const ozPrice = Number(data?.metals?.gold ?? 3200)
-     const newPrice = parseFloat((ozPrice / 31.1035).toFixed(2))
-      const rows = await sql`SELECT price_per_gram, updated_at FROM gold_price WHERE id = 1`
-      const row = rows[0]
-      return NextResponse.json({ success: true, data: { price_per_gram: Number(row.price_per_gram), updated_at: new Date(row.updated_at as string).toISOString() } })
-    }
+  const res = await fetch(`https://api.metals.dev/v1/latest?api_key=${process.env.METALS_API_KEY}&currency=USD&unit=toz`)
+  const data = await res.json()
+  const ozPrice = Number(data?.metals?.gold ?? 3200)
+  const newPrice = parseFloat((ozPrice / 31.1035).toFixed(2))
+  await sql`UPDATE gold_price SET price_per_gram = ${newPrice}, updated_at = NOW() WHERE id = 1`
+  const rows = await sql`SELECT price_per_gram, updated_at FROM gold_price WHERE id = 1`
+  const row = rows[0]
+  return NextResponse.json({ success: true, data: { price_per_gram: Number(row.price_per_gram), updated_at: new Date(row.updated_at as string).toISOString() } })
+}
     return NextResponse.json({ success: false, error: 'Invalid payload' }, { status: 400 })
   } catch (err) {
     return NextResponse.json({ success: false, error: String(err) }, { status: 500 })
