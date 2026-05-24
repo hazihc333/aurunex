@@ -33,7 +33,7 @@ export async function PUT(req: NextRequest) {
     if (body.refresh === true) {
      const res = await fetch(`https://api.metals.dev/v1/latest?api_key=${process.env.METALS_API_KEY}&currency=USD&unit=toz`)
      const data = await res.json()
-     const ozPrice = data?.metals?.gold ?? 3200
+     const ozPrice = Number(data?.metals?.gold ?? 3200)
      const newPrice = parseFloat((ozPrice / 31.1035).toFixed(2))
       const rows = await sql`SELECT price_per_gram, updated_at FROM gold_price WHERE id = 1`
       const row = rows[0]
