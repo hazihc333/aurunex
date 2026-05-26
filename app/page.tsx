@@ -71,6 +71,7 @@ export default function Dashboard() {
   const [goldInputVal, setGoldInputVal] = useState('')
   const [updatingGold, setUpdatingGold] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [userRole, setUserRole] = useState<string>('')
   const { toasts, add: addToast } = useToasts()
 
   // ── Fetch data ─────────────────────────────────────────────────────────────
@@ -87,6 +88,10 @@ export default function Dashboard() {
         setGoldInputVal(gData.data.price_per_gram.toString())
       }
       if (pData.success) setProducts(pData.data)
+        // Get session info
+      const meRes = await fetch('/api/auth/me')
+      const meData = await meRes.json()
+      if (meData.success) setUserRole(meData.user.role)
     } catch {
       addToast('Error al cargar datos', 'error')
     } finally {
@@ -362,9 +367,21 @@ export default function Dashboard() {
               <div className="logo-sub">Calculador de Joyas</div>
             </div>
           </div>
-          <button className="btn btn-ghost btn-sm" onClick={handleLogout}>
-            🚪 Cerrar sesión
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button className="btn btn-ghost btn-sm" onClick={() => window.location.href = '/admin'}>
+              ⚙️ Admin
+            </button>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
+            {userRole === 'admin' && (
+              <button className="btn btn-ghost btn-sm" onClick={() => window.location.href = '/admin'}>
+                ⚙️ Admin
+              </button>
+            )}
+            <button className="btn btn-ghost btn-sm" onClick={handleLogout}>
+              🚪 Cerrar sesión
+            </button>
+          </div>
+          </div>
         </div>
       </header>
 
