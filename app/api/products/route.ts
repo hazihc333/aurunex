@@ -14,19 +14,43 @@ function toProduct(row: Record<string, unknown>) {
     margin_percent: Number(row.margin_percent),
     extras: Number(row.extras),
     notes: row.notes ? String(row.notes) : null,
+    client_name: row.client_name ? String(row.client_name) : null,
     created_at: String(row.created_at),
     updated_at: String(row.updated_at),
   }
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     const session = await getSession()
     if (!session) return NextResponse.json({ success: false, error: 'No autorizado' }, { status: 401 })
     await initAuthDb()
-    const rows = session.role === 'admin'
-      ? await sql`SELECT * FROM products ORDER BY created_at DESC`
-      : await sql`SELECT * FROM products WHERE client_id = ${session.id} ORDER BY created_at DESC`
+    
+    const { searchParams } = new URL(req.url)
+    const clientFilter = searchParams.get('client_id')
+
+    let rows
+    if (session.role === 'admin') {
+      if (clientFilter) {
+        rows = await sql`
+          SELECT p.*, c.name as client_name 
+          FROM products p 
+          JOIN clients c ON p.client_id = c.id 
+          WHERE c.active = true AND p.client_id = ${Number(clientFilter)}
+          ORDER BY p.created_at DESC
+        `
+      } else {
+        rows = await sql`
+          SELECT p.*, c.name as client_name 
+          FROM products p 
+          JOIN clients c ON p.client_id = c.id 
+          WHERE c.active = true
+          ORDER BY p.created_at DESC
+        `
+      }
+    } else {
+      rows = await sql`SELECT * FROM products WHERE client_id = ${session.id} ORDER BY created_at DESC`
+    }
     return NextResponse.json({ success: true, data: rows.map(r => toProduct(r as Record<string, unknown>)) })
   } catch (err) {
     return NextResponse.json({ success: false, error: String(err) }, { status: 500 })
